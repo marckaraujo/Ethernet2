@@ -109,6 +109,34 @@ int EthernetClass::begin(uint8_t *mac_address)
   return ret;
 }
 
+int EthernetClass::begin(uint8_t *mac_address, const char *hostname, unsigned long timeout, unsigned long responseTimeout)
+{
+	if (_dhcp != NULL) {
+		delete _dhcp;
+	}
+	_dhcp = new DhcpClass();
+	// Initialise the basic info
+	w5500.init(w5500_cspin);
+	w5500.setMACAddress(mac_address);
+	w5500.setIPAddress(IPAddress(0, 0, 0, 0).raw_address());
+
+	// Now try to get our config info from a DHCP server
+	int ret = _dhcp->beginWithDHCP(mac_address, hostname, timeout, responseTimeout);
+	if (ret == 1)
+	{
+		// We've successfully found a DHCP server and got our configuration info, so set things
+		// accordingly
+		w5500.setIPAddress(_dhcp->getLocalIp().raw_address());
+		w5500.setGatewayIp(_dhcp->getGatewayIp().raw_address());
+		w5500.setSubnetMask(_dhcp->getSubnetMask().raw_address());
+		_dnsServerAddress = _dhcp->getDnsServerIp();
+		_dnsDomainName = _dhcp->getDnsDomainName();
+		_hostName = _dhcp->getHostName();
+	}
+
+	return ret;
+}
+
 void EthernetClass::begin(uint8_t *mac_address, IPAddress local_ip)
 {
   // Assume the DNS server will be the machine on the same network as the local IP
@@ -202,8 +230,9 @@ char* EthernetClass::dnsDomainName(){
     return _dnsDomainName;
 }
 
-char* EthernetClass::hostName(){
-    return _hostName;
+const char* EthernetClass::hostName() const
+{
+	return _dhcp ? _dhcp->getHostName() : "";
 }
 
 EthernetClass Ethernet;

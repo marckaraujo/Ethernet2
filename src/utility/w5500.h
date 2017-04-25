@@ -186,8 +186,6 @@ public:
   inline void setRetransmissionTime(uint16_t timeout);
   inline void setRetransmissionCount(uint8_t _retry);
 
-  inline void swReset();
-
   inline void setPHYCFGR(uint8_t _val);
   inline uint8_t getPHYCFGR();
 
@@ -411,10 +409,6 @@ void W5500Class::setPHYCFGR(uint8_t _val) {
 uint8_t W5500Class::getPHYCFGR() {
 //  readPHYCFGR();
   return read(0x002E, 0x00);
-}
-
-void W5500Class::swReset() {
-  writeMR( (readMR() | 0x80) );
 }
 
 #endif
